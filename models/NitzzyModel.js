@@ -4,25 +4,25 @@ const NitzzySchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: [true,'title is required' ],
+      required: [true, 'title is required'],
     },
     description: {
       type: String,
-      required: [true,'description is required' ],
+      required: [true, 'description is required'],
     },
-    image : {
+    image: {
       type: String,
-      required: [true,'image is required' ]
+      required: [true, 'image is required'],
     },
-    user:{
-      type : mongoose.Types.ObjectId,
-      ref: 'user',
-      required: [true,"userId is required" ]
-    }
+    user: {
+      type: mongoose.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'userId is required'],
+    },
   },
   { timestamps: true }
 );
 
 const NitzzyModel = mongoose.model('Nitzzy', NitzzySchema);
 
-module.exports = NitzzyModel;   
+module.exports = NitzzyModel;

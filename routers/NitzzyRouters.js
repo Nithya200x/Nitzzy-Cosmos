@@ -1,29 +1,24 @@
 const express = require('express');
-const { getAllNitzzyController,
-     createNitzzyController,
-     updateNitzzyController, 
-     getNitzzyByIdController, 
-     deleteNitzzyController, 
-     getUserNitzzyController } = require('../controllers/NitzzyController.js');
+const NitzzyCtrl = require('../controllers/NitzzyController.js');
 
 const router = express.Router();
 
-// router
 //GET || all blogs
-router.get('/all-blogs', getAllNitzzyController);
+router.get('/all-blogs', NitzzyCtrl.getAllNitzzyController);
 
 //POST || create blog
-router.post('/create-blog', createNitzzyController);
+router.post('/create-blog', NitzzyCtrl.createNitzzyController);
 
 //PUT || update blog
-router.put('/update-blog/:id', updateNitzzyController);
+router.put('/update-blog/:id', NitzzyCtrl.updateNitzzyController);
 
 //GET || single blog
-router.get('/single-blog/:id', getNitzzyByIdController);   
+router.get('/single-blog/:id', NitzzyCtrl.getNitzzyByIdController);
 
 //DELETE || delete blog
-router.delete('/delete-blog/:id', deleteNitzzyController);
+router.delete('/delete-blog/:id', NitzzyCtrl.deleteNitzzyController);
 
 //GET || user blogs
-router.get('/user-blog/:id', getUserNitzzyController);
+router.get('/user-blog/:id', NitzzyCtrl.getUserNitzzyController);
+
 module.exports = router;

@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 const NitzzyModel = require('../models/NitzzyModel.js');
 const User = require('../models/userModel.js');
 
-// get all blogs
-exports.getAllNitzzyController = async (req, res) => {
+// GET /api/v1/nitzzy/all-blogs
+const getAllNitzzyController = async (req, res) => {
   try {
     const nitzzyList = await NitzzyModel.find({}).populate('user', 'username email');
     if (!nitzzyList || nitzzyList.length === 0) {
@@ -16,26 +16,25 @@ exports.getAllNitzzyController = async (req, res) => {
     }
     return res.status(200).send({
       success: true,
-      NitzzyCount: nitzzyList.length,
       message: "All blogs fetched successfully",
+      NitzzyCount: nitzzyList.length,
       Nitzzy: nitzzyList,
     });
   } catch (error) {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error in getting all blogs",
+      message: "Error in getting blogs",
       error,
     });
   }
 };
 
-// create blog
-exports.createNitzzyController = async (req, res) => {
+// POST /api/v1/nitzzy/create-blog
+const createNitzzyController = async (req, res) => {
   try {
     const { title, description, image, user } = req.body;
 
-    // validation
     if (!title || !description || !image || !user) {
       return res.status(400).send({
         success: false,
@@ -43,7 +42,6 @@ exports.createNitzzyController = async (req, res) => {
       });
     }
 
-    // check if user exists
     const existingUser = await User.findById(user);
     if (!existingUser) {
       return res.status(404).send({
@@ -52,26 +50,29 @@ exports.createNitzzyController = async (req, res) => {
       });
     }
 
-    // create blog
-    const newNitzzy = new NitzzyModel({ title, description, image, user });
     const session = await mongoose.startSession();
-    session.startTransaction();
+    try {
+      session.startTransaction();
 
-    await newNitzzy.save({ session });
+      const newNitzzy = await NitzzyModel.create([{ title, description, image, user }], { session });
+      // if user has an array to track posts, maintain it
+      if (Array.isArray(existingUser.nitzzy)) {
+        existingUser.nitzzy.push(newNitzzy[0]._id);
+        await existingUser.save({ session });
+      }
 
-    // if you have a 'blogs' or 'nitzzy' array in userModel, push here
-    // otherwise, skip this part
-    existingUser.nitzzy.push(newNitzzy);
-    await existingUser.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
-
-    return res.status(201).send({
-      success: true,
-      message: "Blog created successfully",
-      newNitzzy,
-    });
+      await session.commitTransaction();
+      return res.status(201).send({
+        success: true,
+        message: "Blog created successfully",
+        Nitzzy: newNitzzy[0],
+      });
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
+    }
   } catch (error) {
     console.log(error);
     return res.status(500).send({
@@ -82,8 +83,8 @@ exports.createNitzzyController = async (req, res) => {
   }
 };
 
-// update blog
-exports.updateNitzzyController = async (req, res) => {
+// PUT /api/v1/nitzzy/update-blog/:id
+const updateNitzzyController = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, image } = req.body;
@@ -116,41 +117,51 @@ exports.updateNitzzyController = async (req, res) => {
   }
 };
 
-// get blog by id
-exports.getNitzzyByIdController = async (req, res) => {
+// GET /api/v1/nitzzy/single-blog/:id
+const getNitzzyByIdController = async (req, res) => {
   try {
     const { id } = req.params;
-    const Nitzzy = await NitzzyModel.findById(id).populate('user', 'username email');
-    if (!Nitzzy) {
+    const blog = await NitzzyModel.findById(id).populate('user', 'username email');
+
+    if (!blog) {
       return res.status(404).send({
         success: false,
         message: "Blog not found",
       });
     }
+
     return res.status(200).send({
       success: true,
       message: "Blog fetched successfully",
-      Nitzzy,
+      Nitzzy: blog,
     });
   } catch (error) {
     console.log(error);
     return res.status(500).send({
       success: false,
-      message: "Error in getting blog by id",
+      message: "Error in getting blog",
       error,
     });
   }
 };
 
-// delete blog
-exports.deleteNitzzyController = async (req, res) => {
+// DELETE /api/v1/nitzzy/delete-blog/:id
+const deleteNitzzyController = async (req, res) => {
   try {
-    const nitzzy = await NitzzyModel.findById(req.params.id).populate('user');
-    await nitzzy.user.nitzzy.pull(nitzzy);
-    await nitzzy.user.save();
-
-
     const { id } = req.params;
+    const nitzzy = await NitzzyModel.findById(id).populate('user');
+    if (!nitzzy) {
+      return res.status(404).send({
+        success: false,
+        message: "Blog not found for delete",
+      });
+    }
+
+    if (nitzzy.user && Array.isArray(nitzzy.user.nitzzy)) {
+      nitzzy.user.nitzzy.pull(nitzzy._id);
+      await nitzzy.user.save();
+    }
+
     await NitzzyModel.findByIdAndDelete(id);
     return res.status(200).send({
       success: true,
@@ -166,12 +177,11 @@ exports.deleteNitzzyController = async (req, res) => {
   }
 };
 
-// get blogs by user
-exports.getUserNitzzyController = async (req, res) => {
+// GET /api/v1/nitzzy/user-blog/:id
+const getUserNitzzyController = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // validate user id
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).send({
         success: false,
@@ -179,8 +189,7 @@ exports.getUserNitzzyController = async (req, res) => {
       });
     }
 
-    // check if user exists
-    const existingUser = await User.findById(id).select("_id");
+    const existingUser = await User.findById(id).select('_id');
     if (!existingUser) {
       return res.status(404).send({
         success: false,
@@ -188,17 +197,14 @@ exports.getUserNitzzyController = async (req, res) => {
       });
     }
 
-    // find all blogs by this user
-    const Nitzzy = await NitzzyModel.find({ user: id }).sort({ createdAt: -1 });
+    const Nitzzy = await NitzzyModel.find({ user: id }).populate('user', 'username email');
 
-    // always return success, even if no blogs
     return res.status(200).send({
       success: true,
       NitzzyCount: Nitzzy.length,
-      message:
-        Nitzzy.length > 0
-          ? "User blogs fetched successfully"
-          : "No blogs found for this user",
+      message: Nitzzy.length > 0
+        ? "User blogs fetched successfully"
+        : "No blogs found for this user",
       Nitzzy,
     });
   } catch (error) {
@@ -209,4 +215,13 @@ exports.getUserNitzzyController = async (req, res) => {
       error,
     });
   }
+};
+
+module.exports = {
+  getAllNitzzyController,
+  createNitzzyController,
+  updateNitzzyController,
+  getNitzzyByIdController,
+  deleteNitzzyController,
+  getUserNitzzyController,
 };
