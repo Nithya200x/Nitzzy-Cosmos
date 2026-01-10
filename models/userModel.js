@@ -15,6 +15,18 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Password is required"]
   },
+  // Verification Part
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  otp: {
+    type: String
+  },
+  otpExpiry: {
+    type: Date
+  },
+  
   nitzzy: [{
     type: mongoose.Types.ObjectId,
     ref: 'Nitzzy'

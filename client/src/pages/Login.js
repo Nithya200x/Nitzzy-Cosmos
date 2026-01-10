@@ -10,6 +10,7 @@ const Login = () => {
   const dispatch = useDispatch();
 
   const [inputs, setInputs] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) =>
     setInputs((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -63,17 +64,29 @@ const Login = () => {
               focus:outline-none focus:border-indigo-500"
           />
 
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            onChange={handleChange}
-            required
-            className="w-full rounded-lg px-4 py-3
-              bg-black/40 text-white
-              border border-white/10
-              focus:outline-none focus:border-indigo-500"
-          />
+          {/* Password with toggle */}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Password"
+              onChange={handleChange}
+              required
+              className="w-full rounded-lg px-4 py-3 pr-16
+                bg-black/40 text-white
+                border border-white/10
+                focus:outline-none focus:border-indigo-500"
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-4 top-1/2 -translate-y-1/2
+                text-sm text-indigo-400 hover:text-indigo-300"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
         </div>
 
         <button

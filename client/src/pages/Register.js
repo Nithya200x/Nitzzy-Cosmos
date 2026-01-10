@@ -12,24 +12,53 @@ const Register = () => {
     password: "",
   });
 
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleChange = (e) =>
     setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
+  // SEND OTP
+  const sendOtp = async () => {
+    if (!inputs.email) {
+      toast.error("Please enter email first");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await axios.post(
+        "http://localhost:8080/api/v1/user/send-otp",
+        { email: inputs.email }
+      );
+      toast.success("OTP sent to your email");
+      setOtpSent(true);
+    } catch {
+      toast.error("Failed to send OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // VERIFY OTP & REGISTER
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!inputs.name || !inputs.email || !inputs.password) {
-      toast.error("Please fill all fields");
+    if (!inputs.name || !inputs.email || !inputs.password || !otp) {
+      toast.error("Please fill all fields including OTP");
       return;
     }
 
     try {
       const { data } = await axios.post(
-        "http://localhost:8080/api/v1/user/register",
+        "http://localhost:8080/api/v1/user/verify-otp",
         {
           username: inputs.name,
           email: inputs.email,
           password: inputs.password,
+          otp,
         }
       );
 
@@ -40,7 +69,7 @@ const Register = () => {
         toast.error(data?.message || "Registration failed");
       }
     } catch {
-      toast.error("Could not connect to backend");
+      toast.error("Invalid or expired OTP");
     }
   };
 
@@ -56,7 +85,6 @@ const Register = () => {
           shadow-[0_0_70px_rgba(124,58,237,0.35)]
         "
       >
-        {/* TITLE */}
         <h1 className="text-3xl font-heading text-center mb-2">
           Join Nitzzy Cosmos 🚀
         </h1>
@@ -64,19 +92,16 @@ const Register = () => {
           Create your account and start writing beyond the stars
         </p>
 
-        {/* INPUTS */}
         <div className="space-y-6">
           <input
             name="name"
             placeholder="Your name"
             onChange={handleChange}
             required
-            className="
-              w-full rounded-lg px-4 py-3
+            className="w-full rounded-lg px-4 py-3
               bg-black/40 text-white
               border border-white/10
-              focus:outline-none focus:border-indigo-500
-            "
+              focus:outline-none focus:border-indigo-500"
           />
 
           <input
@@ -85,43 +110,71 @@ const Register = () => {
             placeholder="Email address"
             onChange={handleChange}
             required
-            className="
-              w-full rounded-lg px-4 py-3
+            className="w-full rounded-lg px-4 py-3
               bg-black/40 text-white
               border border-white/10
-              focus:outline-none focus:border-indigo-500
-            "
+              focus:outline-none focus:border-indigo-500"
           />
 
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            onChange={handleChange}
-            required
-            className="
-              w-full rounded-lg px-4 py-3
-              bg-black/40 text-white
-              border border-white/10
-              focus:outline-none focus:border-indigo-500
-            "
-          />
+          {/* Send OTP */}
+          <button
+            type="button"
+            onClick={sendOtp}
+            disabled={loading}
+            className="w-full py-2 rounded-lg
+              bg-indigo-500 hover:bg-indigo-600
+              text-white font-medium transition"
+          >
+            {loading ? "Sending OTP..." : "Send OTP"}
+          </button>
+
+          {/* OTP Input */}
+          {otpSent && (
+            <input
+              placeholder="Enter OTP"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              className="w-full rounded-lg px-4 py-3
+                bg-black/40 text-white
+                border border-white/10
+                focus:outline-none focus:border-indigo-500"
+            />
+          )}
+
+          {/* Password */}
+          <div className="relative">
+            <input
+              name="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              onChange={handleChange}
+              required
+              className="w-full rounded-lg px-4 py-3 pr-16
+                bg-black/40 text-white
+                border border-white/10
+                focus:outline-none focus:border-indigo-500"
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-4 top-1/2 -translate-y-1/2
+                text-sm text-indigo-400 hover:text-indigo-300"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
         </div>
 
-        {/* BUTTON */}
         <button
           type="submit"
-          className="
-            mt-8 w-full py-3 rounded-xl
+          className="mt-8 w-full py-3 rounded-xl
             bg-indigo-600 hover:bg-indigo-700
-            text-white font-semibold
-            transition
-          "
+            text-white font-semibold transition"
         >
-          Create Account
+          Verify & Create Account
         </button>
 
-        {/* FOOTER */}
         <p className="text-center text-sm text-gray-400 mt-6">
           Already have an account?{" "}
           <span

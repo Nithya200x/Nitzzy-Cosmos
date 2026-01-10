@@ -1,5 +1,10 @@
 const express = require('express');
-const { getAllUsers, registerController, loginController} = require('../controllers/userController');
+const {
+  getAllUsers,
+  loginController,
+  sendOtpController,
+  verifyOtpAndRegisterController
+} = require('../controllers/userController');
 
 // router obj
 const router = express.Router();
@@ -7,10 +12,13 @@ const router = express.Router();
 // get all users || GET
 router.get('/all-users', getAllUsers);
 
-// create user || POST
-router.post('/register', registerController);
+// send OTP to email || POST
+router.post('/send-otp', sendOtpController);
+
+// verify OTP & register user || POST
+router.post('/verify-otp', verifyOtpAndRegisterController);
 
 // login user || POST
-router.post('/login', loginController); 
+router.post('/login', loginController);
 
 module.exports = router;
