@@ -1,22 +1,18 @@
-const mongoose = require('mongoose');
-const NitzzyModel = require('../models/NitzzyModel.js');
-const User = require('../models/userModel.js');
+const mongoose = require("mongoose");
+const NitzzyModel = require("../models/NitzzyModel.js");
+const User = require("../models/userModel.js");
 
-// GET /api/v1/nitzzy/all-blogs
+// get all public blogs
 const getAllNitzzyController = async (req, res) => {
   try {
-    const nitzzyList = await NitzzyModel.find({}).populate('user', 'username email');
-    if (!nitzzyList || nitzzyList.length === 0) {
-      return res.status(200).send({
-        success: true,
-        message: "No blogs found",
-        NitzzyCount: 0,
-        Nitzzy: [],
-      });
-    }
+    const nitzzyList = await NitzzyModel.find({ isDeleted: false })
+      .populate("user", "username email");
+
     return res.status(200).send({
       success: true,
-      message: "All blogs fetched successfully",
+      message: nitzzyList.length
+        ? "All blogs fetched successfully"
+        : "No blogs found",
       NitzzyCount: nitzzyList.length,
       Nitzzy: nitzzyList,
     });
@@ -25,12 +21,11 @@ const getAllNitzzyController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in getting blogs",
-      error,
     });
   }
 };
 
-// POST /api/v1/nitzzy/create-blog
+//create blog
 const createNitzzyController = async (req, res) => {
   try {
     const { title, description, image, user } = req.body;
@@ -38,7 +33,7 @@ const createNitzzyController = async (req, res) => {
     if (!title || !description || !image || !user) {
       return res.status(400).send({
         success: false,
-        message: "Please provide title, description, image, and user ID",
+        message: "All fields are required",
       });
     }
 
@@ -51,77 +46,74 @@ const createNitzzyController = async (req, res) => {
     }
 
     const session = await mongoose.startSession();
-    try {
-      session.startTransaction();
+    session.startTransaction();
 
-      const newNitzzy = await NitzzyModel.create([{ title, description, image, user }], { session });
-      // if user has an array to track posts, maintain it
-      if (Array.isArray(existingUser.nitzzy)) {
-        existingUser.nitzzy.push(newNitzzy[0]._id);
-        await existingUser.save({ session });
-      }
+    const newBlog = await NitzzyModel.create(
+      [{ title, description, image, user }],
+      { session }
+    );
 
-      await session.commitTransaction();
-      return res.status(201).send({
-        success: true,
-        message: "Blog created successfully",
-        Nitzzy: newNitzzy[0],
-      });
-    } catch (err) {
-      await session.abortTransaction();
-      throw err;
-    } finally {
-      session.endSession();
+    if (Array.isArray(existingUser.nitzzy)) {
+      existingUser.nitzzy.push(newBlog[0]._id);
+      await existingUser.save({ session });
     }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(201).send({
+      success: true,
+      message: "Blog created successfully",
+      Nitzzy: newBlog[0],
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).send({
       success: false,
       message: "Error in creating blog",
-      error,
     });
   }
 };
 
-// PUT /api/v1/nitzzy/update-blog/:id
+// update BLOG
 const updateNitzzyController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, image } = req.body;
 
-    const updatedNitzzy = await NitzzyModel.findByIdAndUpdate(
-      id,
-      { title, description, image },
+    const updated = await NitzzyModel.findOneAndUpdate(
+      { _id: id, isDeleted: false },
+      req.body,
       { new: true }
     );
 
-    if (!updatedNitzzy) {
+    if (!updated) {
       return res.status(404).send({
         success: false,
-        message: "Blog not found for update",
+        message: "Blog not found or deleted",
       });
     }
 
-    return res.status(200).send({
+    res.status(200).send({
       success: true,
       message: "Blog updated successfully",
-      Nitzzy: updatedNitzzy,
+      Nitzzy: updated,
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({
+    res.status(500).send({
       success: false,
-      message: "Error in updating blog",
-      error,
+      message: "Error updating blog",
     });
   }
 };
 
-// GET /api/v1/nitzzy/single-blog/:id
+// GET single BLOG BY ID
 const getNitzzyByIdController = async (req, res) => {
   try {
-    const { id } = req.params;
-    const blog = await NitzzyModel.findById(id).populate('user', 'username email');
+    const blog = await NitzzyModel.findOne({
+      _id: req.params.id,
+      isDeleted: false,
+    }).populate("user", "username email");
 
     if (!blog) {
       return res.status(404).send({
@@ -130,89 +122,106 @@ const getNitzzyByIdController = async (req, res) => {
       });
     }
 
-    return res.status(200).send({
+    res.status(200).send({
       success: true,
-      message: "Blog fetched successfully",
       Nitzzy: blog,
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({
+    res.status(500).send({
       success: false,
-      message: "Error in getting blog",
-      error,
+      message: "Error fetching blog",
     });
   }
 };
 
-// DELETE /api/v1/nitzzy/delete-blog/:id
+// soft DELETE BLOG
 const deleteNitzzyController = async (req, res) => {
   try {
-    const { id } = req.params;
-    const nitzzy = await NitzzyModel.findById(id).populate('user');
-    if (!nitzzy) {
+    const blog = await NitzzyModel.findById(req.params.id);
+    if (!blog || blog.isDeleted) {
       return res.status(404).send({
         success: false,
-        message: "Blog not found for delete",
+        message: "Blog not found",
       });
     }
 
-    if (nitzzy.user && Array.isArray(nitzzy.user.nitzzy)) {
-      nitzzy.user.nitzzy.pull(nitzzy._id);
-      await nitzzy.user.save();
-    }
+    blog.isDeleted = true;
+    blog.deletedAt = new Date();
+    blog.deletedBy = req.user.id;
+    await blog.save();
 
-    await NitzzyModel.findByIdAndDelete(id);
-    return res.status(200).send({
+    res.status(200).send({
       success: true,
-      message: "Blog deleted successfully",
+      message: "Blog moved to trash",
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({
+    res.status(500).send({
       success: false,
-      message: "Error in deleting blog",
-      error,
+      message: "Error deleting blog",
     });
   }
 };
 
-// GET /api/v1/nitzzy/user-blog/:id
-const getUserNitzzyController = async (req, res) => {
+//  GET DELETED BLOGS
+const getDeletedBlogsController = async (req, res) => {
   try {
-    const { id } = req.params;
+    const blogs = await NitzzyModel.find({
+      isDeleted: true,
+      deletedBy: req.user.id,
+    });
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).send({
-        success: false,
-        message: "Invalid user id",
-      });
-    }
-
-    const existingUser = await User.findById(id).select('_id');
-    if (!existingUser) {
-      return res.status(404).send({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    const Nitzzy = await NitzzyModel.find({ user: id }).populate('user', 'username email');
-
-    return res.status(200).send({
+    res.status(200).send({
       success: true,
-      NitzzyCount: Nitzzy.length,
-      message: Nitzzy.length > 0
-        ? "User blogs fetched successfully"
-        : "No blogs found for this user",
-      Nitzzy,
+      count: blogs.length,
+      blogs,
     });
   } catch (error) {
-    console.log(error);
-    return res.status(500).send({
+    res.status(500).send({
       success: false,
-      message: "Error in getting user blogs",
-      error,
+      message: "Error fetching deleted blogs",
+    });
+  }
+};
+//  RESTORE BLOG FROM TRASH
+const restoreBlogController = async (req, res) => {
+  const blog = await NitzzyModel.findById(req.params.id);
+  if (!blog || !blog.isDeleted) {
+    return res.status(404).send({ success: false });
+  }
+
+  blog.isDeleted = false;
+  blog.deletedAt = null;
+  blog.deletedBy = null;
+  await blog.save();
+
+  res.send({ success: true, message: "Blog restored" });
+};
+
+//  PERMANENT DELETE
+const permanentDeleteBlogController = async (req, res) => {
+  await NitzzyModel.findByIdAndDelete(req.params.id);
+  res.send({ success: true, message: "Blog permanently deleted" });
+};
+
+//  USER BLOGS
+const getUserNitzzyController = async (req, res) => {
+  try {
+    const blogs = await NitzzyModel.find({
+      user: req.params.id,
+      isDeleted: false,
+    }).populate("user", "username email");
+
+    res.status(200).send({
+      success: true,
+      NitzzyCount: blogs.length,
+      Nitzzy: blogs,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error fetching user blogs",
     });
   }
 };
@@ -223,5 +232,8 @@ module.exports = {
   updateNitzzyController,
   getNitzzyByIdController,
   deleteNitzzyController,
+  getDeletedBlogsController,
+  restoreBlogController,
+  permanentDeleteBlogController,
   getUserNitzzyController,
 };

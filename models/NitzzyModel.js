@@ -1,28 +1,41 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const NitzzySchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: [true, 'title is required'],
+      required: [true, "title is required"],
     },
     description: {
       type: String,
-      required: [true, 'description is required'],
+      required: [true, "description is required"],
     },
     image: {
       type: String,
-      required: [true, 'image is required'],
+      required: [true, "image is required"],
     },
     user: {
       type: mongoose.Types.ObjectId,
-      ref: 'User',
-      required: [true, 'userId is required'],
+      ref: "User",
+      required: true,
+    },
+
+    // SOFT DELETE FIELDS
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    deletedBy: {
+      type: mongoose.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
   },
   { timestamps: true }
 );
 
-const NitzzyModel = mongoose.model('Nitzzy', NitzzySchema);
-
-module.exports = NitzzyModel;
+module.exports = mongoose.model("Nitzzy", NitzzySchema);

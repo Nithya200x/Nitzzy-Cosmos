@@ -11,7 +11,8 @@ const Header = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const isLogin = useSelector((state) => state.isLogin);
+  const isLogin = useSelector((state) => state.auth.isLogin);
+  const user = useSelector((state) => state.auth.user);
 
   const handleLogout = () => {
     dispatch(authActions.logout());
@@ -52,12 +53,30 @@ const Header = () => {
               <Link className={isActive("/")} to="/">
                 All Blogs
               </Link>
+
               <Link className={isActive("/my-blogs")} to="/my-blogs">
                 My Blogs
               </Link>
+
               <Link className={isActive("/create-blog")} to="/create-blog">
                 Create Blog
               </Link>
+
+              <Link className={isActive("/profile")} to="/profile">
+                Profile
+              </Link>
+
+              <Link className={isActive("/trash")} to="/trash">
+                Trash
+              </Link>
+
+              {/* ADMIN (future-ready, safe) */}
+              {user?.role === "admin" && (
+                <Link className={isActive("/admin")} to="/admin">
+                  Admin
+                </Link>
+              )}
+
               <button
                 onClick={handleLogout}
                 className="ml-4 px-4 py-2 rounded-md border border-white/10 hover:bg-white/10 transition"
@@ -70,6 +89,7 @@ const Header = () => {
               <Link className={isActive("/login")} to="/login">
                 Login
               </Link>
+
               <Link
                 to="/register"
                 className="px-4 py-2 rounded-md bg-indigo-500 text-white hover:bg-indigo-600 transition"

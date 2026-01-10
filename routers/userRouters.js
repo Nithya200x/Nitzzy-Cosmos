@@ -5,7 +5,8 @@ const {
   sendOtpController,
   verifyOtpAndRegisterController,
   sendForgotPasswordOtpController,
-  verifyOtpAndResetPasswordController
+  verifyOtpAndResetPasswordController,
+  getProfileController,
 } = require('../controllers/userController');
 
 const authMiddleware = require('../middleware/authMiddleware');
@@ -15,6 +16,10 @@ const router = express.Router();
 
 // PROTECTED ROUTE (JWT REQUIRED)
 router.get('/all-users', authMiddleware, getAllUsers);
+
+// user profile || GET
+router.get("/profile", authMiddleware, getProfileController);
+
 
 // send OTP to email || POST
 router.post('/send-otp', sendOtpController);

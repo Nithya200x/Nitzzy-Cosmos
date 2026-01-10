@@ -19,52 +19,50 @@ const BlogCard = ({
 
   const handleDelete = async () => {
     try {
-      const { data } = await axios.delete(
-        `http://localhost:8080/api/v1/nitzzy/delete-blog/${id}`
+      const token = localStorage.getItem("token");
+
+      await axios.delete(
+        `http://localhost:8080/api/v1/nitzzy/delete-blog/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-      if (data?.success) {
-        toast.success("Blog deleted");
-        window.location.reload();
-      }
+
+      toast.success("Blog moved to trash 🗑️");
+
+      navigate("/trash"); // 🔥 THIS LINE FIXES THE DELAY
     } catch (error) {
-      toast.error("Delete failed");
+      toast.error(
+        error?.response?.data?.message || "Delete failed"
+      );
     }
   };
 
   return (
-    <div
-      className="
-        group relative max-w-3xl mx-auto mb-10
-        rounded-xl border border-white/10
-        bg-white/5 backdrop-blur-xl
-        shadow-[0_0_40px_rgba(124,58,237,0.08)]
-        hover:shadow-[0_0_60px_rgba(124,58,237,0.25)]
-        transition-all duration-300
-      "
-    >
+    <div className="group relative max-w-3xl mx-auto mb-10 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl transition-all">
       {/* EDIT / DELETE */}
       {isUser && (
         <div className="absolute top-4 right-4 flex gap-3 opacity-0 group-hover:opacity-100 transition">
           <button
             onClick={handleEdit}
-            className="text-xs px-3 py-1 rounded bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/40"
+            className="text-xs px-3 py-1 rounded bg-indigo-500/20 text-indigo-300"
           >
             Edit
           </button>
           <button
             onClick={handleDelete}
-            className="text-xs px-3 py-1 rounded bg-red-500/20 text-red-300 hover:bg-red-500/40"
+            className="text-xs px-3 py-1 rounded bg-red-500/20 text-red-300"
           >
             Delete
           </button>
         </div>
       )}
 
-      {/* CONTENT */}
       <div className="p-6">
-        {/* AUTHOR */}
         <div className="flex items-center gap-3 mb-4">
-          <div className="h-10 w-10 rounded-full bg-indigo-600/30 flex items-center justify-center text-indigo-300 font-bold">
+          <div className="h-10 w-10 rounded-full bg-indigo-600/30 flex items-center justify-center">
             {username?.[0]?.toUpperCase() || "U"}
           </div>
           <div>
@@ -75,17 +73,14 @@ const BlogCard = ({
           </div>
         </div>
 
-        {/* IMAGE */}
         {image && (
-          <img
-            src={image}
-            alt={title}
-            onError={(e) => (e.target.style.display = "none")}
-            className="w-full h-64 object-cover rounded-lg mb-4"
-          />
-        )}
-
-        {/* TEXT */}
+  <img
+    src={image}
+    alt={title}
+    onError={(e) => (e.target.style.display = "none")}
+    className="w-full h-64 object-cover rounded-lg mb-4"
+  />
+)}
         <h2 className="text-xl font-semibold text-white mb-2">
           {title}
         </h2>

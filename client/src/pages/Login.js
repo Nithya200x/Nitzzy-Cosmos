@@ -9,27 +9,44 @@ const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const [inputs, setInputs] = useState({ email: "", password: "" });
+  const [inputs, setInputs] = useState({
+    email: "",
+    password: "",
+  });
   const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) =>
-    setInputs((p) => ({ ...p, [e.target.name]: e.target.value }));
+    setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       const { data } = await axios.post(
         "http://localhost:8080/api/v1/user/login",
         inputs
       );
+
       if (data?.success) {
-        localStorage.setItem("userId", data.user._id);
-        dispatch(authActions.login());
+        // ✅ Persist JWT
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        // ✅ Attach token globally
+        axios.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${data.token}`;
+
+        // ✅ Update Redux (THIS enables ProtectedRoute)
+        dispatch(authActions.login(data.user));
+
         toast.success("Welcome back ✨");
         navigate("/");
       }
-    } catch {
-      toast.error("Invalid credentials");
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message || "Invalid credentials"
+      );
     }
   };
 
@@ -48,6 +65,7 @@ const Login = () => {
         <h1 className="text-3xl font-heading text-center mb-2">
           Welcome Back ✨
         </h1>
+
         <p className="text-center text-gray-400 mb-8">
           Log in to continue your journey
         </p>
@@ -55,6 +73,7 @@ const Login = () => {
         <div className="space-y-6">
           <input
             name="email"
+            type="email"
             placeholder="Email address"
             onChange={handleChange}
             required
@@ -64,7 +83,7 @@ const Login = () => {
               focus:outline-none focus:border-indigo-500"
           />
 
-          {/* Password with toggle */}
+          {/* PASSWORD */}
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -87,6 +106,14 @@ const Login = () => {
               {showPassword ? "Hide" : "Show"}
             </button>
           </div>
+
+          {/* FORGOT PASSWORD */}
+          <p
+            onClick={() => navigate("/forgot-password")}
+            className="text-sm text-indigo-400 cursor-pointer hover:underline"
+          >
+            Forgot password?
+          </p>
         </div>
 
         <button
