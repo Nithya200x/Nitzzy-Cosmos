@@ -3,7 +3,9 @@ const {
   getAllUsers,
   loginController,
   sendOtpController,
-  verifyOtpAndRegisterController
+  verifyOtpAndRegisterController,
+  sendForgotPasswordOtpController,
+  verifyOtpAndResetPasswordController
 } = require('../controllers/userController');
 
 const authMiddleware = require('../middleware/authMiddleware');
@@ -22,5 +24,10 @@ router.post('/verify-otp', verifyOtpAndRegisterController);
 
 // login user || POST
 router.post('/login', loginController);
+
+// forgot password|| POST
+router.post('/forgot-password/send-otp', sendForgotPasswordOtpController);
+router.post('/forgot-password/reset', verifyOtpAndResetPasswordController);
+
 
 module.exports = router;

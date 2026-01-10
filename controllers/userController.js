@@ -170,3 +170,90 @@ exports.loginController = async (req, res) => {
     });
   }
 };
+// FORGOT PASSWORD: SEND OTP 
+exports.sendForgotPasswordOtpController = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).send({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "Email not registered",
+      });
+    }
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+
+    user.otp = otp;
+    user.otpExpiry = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    await sendEmail(
+      email,
+      "Nitzzy Cosmos - Password Reset OTP",
+      `<h2>Your password reset OTP is: ${otp}</h2><p>Valid for 10 minutes</p>`
+    );
+
+    return res.status(200).send({
+      success: true,
+      message: "Password reset OTP sent to email",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error in sending password reset OTP",
+    });
+  }
+};
+
+// FORGOT PASSWORD: VERIFY OTP & RESET PASSWORD
+exports.verifyOtpAndResetPasswordController = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).send({
+        success: false,
+        message: "Email, OTP and new password are required",
+      });
+    }
+
+    const user = await userModel.findOne({ email });
+
+    if (!user || user.otp !== otp || user.otpExpiry < Date.now()) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid or expired OTP",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    user.otp = null;
+    user.otpExpiry = null;
+
+    await user.save();
+
+    return res.status(200).send({
+      success: true,
+      message: "Password reset successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error in resetting password",
+    });
+  }
+};
