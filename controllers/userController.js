@@ -1,9 +1,9 @@
 const userModel = require('../models/userModel.js');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail.js');
-
-//SENDING OTP TO EMAIL
+// Send OTP TO EMAIL
 exports.sendOtpController = async (req, res) => {
   try {
     const { email } = req.body;
@@ -15,20 +15,17 @@ exports.sendOtpController = async (req, res) => {
       });
     }
 
-    // generate 6 digit OTP
     const otp = crypto.randomInt(100000, 999999).toString();
 
-    // save or update OTP for this email
     await userModel.findOneAndUpdate(
       { email },
       {
         otp,
-        otpExpiry: Date.now() + 10 * 60 * 1000, // 10 minutes
+        otpExpiry: Date.now() + 10 * 60 * 1000,
       },
       { upsert: true }
     );
 
-    // send OTP email
     await sendEmail(
       email,
       "Nitzzy Cosmos - Email Verification",
@@ -44,7 +41,6 @@ exports.sendOtpController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in sending OTP",
-      error,
     });
   }
 };
@@ -63,18 +59,13 @@ exports.verifyOtpAndRegisterController = async (req, res) => {
 
     const user = await userModel.findOne({ email });
 
-    if (
-      !user ||
-      user.otp !== otp ||
-      user.otpExpiry < Date.now()
-    ) {
+    if (!user || user.otp !== otp || user.otpExpiry < Date.now()) {
       return res.status(400).send({
         success: false,
         message: "Invalid or expired OTP",
       });
     }
 
-    // hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     user.username = username;
@@ -88,26 +79,23 @@ exports.verifyOtpAndRegisterController = async (req, res) => {
     return res.status(201).send({
       success: true,
       message: "User registered successfully",
-      user,
     });
   } catch (error) {
     console.log(error);
     return res.status(500).send({
       success: false,
       message: "Error in verifying OTP & registering user",
-      error,
     });
   }
 };
 
-//GET ALL USERS 
+// GET ALL USERS
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await userModel.find({});
     return res.status(200).send({
       userCount: users.length,
       success: true,
-      message: "All users fetched successfully",
       users,
     });
   } catch (error) {
@@ -115,11 +103,11 @@ exports.getAllUsers = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in getting all users",
-      error,
     });
   }
 };
- //blocks unverified users
+
+//LOGIN + JWT TOKEN 
 exports.loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -154,18 +142,31 @@ exports.loginController = async (req, res) => {
         message: "Invalid password",
       });
     }
+   // checking 
+   console.log("JWT_SECRET:", process.env.JWT_SECRET);
+
+    // CREATEING JWT TOKEN
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     return res.status(200).send({
       success: true,
       message: "User logged in successfully",
-      user,
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+      },
     });
   } catch (error) {
     console.log(error);
     return res.status(500).send({
       success: false,
       message: "Error in user login",
-      error,
     });
   }
 };

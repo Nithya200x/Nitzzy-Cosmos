@@ -6,11 +6,13 @@ const {
   verifyOtpAndRegisterController
 } = require('../controllers/userController');
 
+const authMiddleware = require('../middleware/authMiddleware');
+
 // router obj
 const router = express.Router();
 
-// get all users || GET
-router.get('/all-users', getAllUsers);
+// PROTECTED ROUTE (JWT REQUIRED)
+router.get('/all-users', authMiddleware, getAllUsers);
 
 // send OTP to email || POST
 router.post('/send-otp', sendOtpController);
