@@ -47,7 +47,7 @@ const UserBlogs = () => {
 
   useEffect(() => {
     getUserBlogs();
-  }, [location.pathname]); // 🔑 refetch on navigation
+  }, [location.pathname]); //refetch on navigation
 
   if (loading) {
     return (

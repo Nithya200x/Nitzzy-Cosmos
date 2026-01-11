@@ -15,7 +15,7 @@ const upload = require("../middleware/upload");
 // router obj
 const router = express.Router();
 
-// PROTECTED ROUTE (JWT REQUIRED)
+// protected routes (JWT req) || GET
 router.get('/all-users', authMiddleware, getAllUsers);
 
 // user profile || GET

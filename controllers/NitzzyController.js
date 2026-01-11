@@ -1,9 +1,7 @@
 const mongoose = require("mongoose");
 const NitzzyModel = require("../models/NitzzyModel.js");
 
-/* =========================================
-   GET ALL PUBLIC BLOGS
-========================================= */
+// get all blogs
 const getAllNitzzyController = async (req, res) => {
   try {
     const blogs = await NitzzyModel.find({ isDeleted: false })
@@ -24,9 +22,7 @@ const getAllNitzzyController = async (req, res) => {
   }
 };
 
-/* =========================================
-   CREATE BLOG (AUTH REQUIRED)
-========================================= */
+// create blog
 const createNitzzyController = async (req, res) => {
   try {
     const { title, description, image } = req.body;
@@ -59,9 +55,7 @@ const createNitzzyController = async (req, res) => {
   }
 };
 
-/* =========================================
-   UPDATE BLOG (OWNER ONLY)
-========================================= */
+// update blog
 const updateNitzzyController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -106,10 +100,7 @@ const updateNitzzyController = async (req, res) => {
   }
 };
 
-/* =========================================
-   GET SINGLE BLOG (PUBLIC)
-========================================= */
-// GET SINGLE BLOG (PUBLIC)
+// get blog by id
 const getNitzzyByIdController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -139,10 +130,7 @@ const getNitzzyByIdController = async (req, res) => {
   }
 };
 
-
-/* =========================================
-   SOFT DELETE BLOG (OWNER ONLY)
-========================================= */
+// soft delete blog
 const deleteNitzzyController = async (req, res) => {
   try {
     const blog = await NitzzyModel.findById(req.params.id);
@@ -179,9 +167,7 @@ const deleteNitzzyController = async (req, res) => {
   }
 };
 
-/* =========================================
-   GET LOGGED-IN USER BLOGS
-========================================= */
+// get user's blogs
 const getUserNitzzyController = async (req, res) => {
   try {
     const blogs = await NitzzyModel.find({
@@ -204,10 +190,7 @@ const getUserNitzzyController = async (req, res) => {
     });
   }
 };
-
-/* =========================================
-   GET DELETED BLOGS (USER)
-========================================= */
+// get deleted blogs
 const getDeletedBlogsController = async (req, res) => {
   try {
     const blogs = await NitzzyModel.find({
@@ -228,9 +211,8 @@ const getDeletedBlogsController = async (req, res) => {
   }
 };
 
-/* =========================================
-   RESTORE BLOG
-========================================= */
+// restore deleted blog
+
 const restoreBlogController = async (req, res) => {
   const blog = await NitzzyModel.findById(req.params.id);
 
@@ -250,9 +232,7 @@ const restoreBlogController = async (req, res) => {
   res.send({ success: true, message: "Blog restored" });
 };
 
-/* =========================================
-   PERMANENT DELETE
-========================================= */
+// permanently delete blog
 const permanentDeleteBlogController = async (req, res) => {
   const blog = await NitzzyModel.findById(req.params.id);
 

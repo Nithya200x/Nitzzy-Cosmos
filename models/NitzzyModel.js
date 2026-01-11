@@ -20,7 +20,7 @@ const NitzzySchema = new mongoose.Schema(
       required: true,
     },
 
-    // SOFT DELETE FIELDS
+    //soft del fields
     isDeleted: {
       type: Boolean,
       default: false,

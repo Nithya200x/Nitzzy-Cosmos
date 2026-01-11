@@ -17,7 +17,7 @@ const emailOtpSchema = new mongoose.Schema(
     expiresAt: {
       type: Date,
       required: true,
-      index: { expires: 0 }, // ⏱ TTL INDEX (AUTO DELETE)
+      index: { expires: 0 }, // auto del after expiry
     },
   },
   { timestamps: true }

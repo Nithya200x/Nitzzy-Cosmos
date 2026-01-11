@@ -6,9 +6,7 @@ const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/sendEmail");
 const cloudinary = require("../config/cloudinary");
 
-/* ===========================
-   SEND OTP (REGISTER)
-=========================== */
+// SEND OTP (FOR REGISTRATION)
 exports.sendOtpController = async (req, res) => {
   try {
     const { email } = req.body;
@@ -16,7 +14,7 @@ exports.sendOtpController = async (req, res) => {
       return res.status(400).json({ success: false, message: "Email required" });
     }
 
-    // ❌ Prevent duplicate users
+    // Prevents duplicate users
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({
@@ -49,9 +47,7 @@ exports.sendOtpController = async (req, res) => {
   }
 };
 
-/* ===========================
-   VERIFY OTP & REGISTER
-=========================== */
+// VERIFY OTP & REGISTER
 exports.verifyOtpAndRegisterController = async (req, res) => {
   try {
     const { username, email, password, otp } = req.body;
@@ -91,10 +87,7 @@ exports.verifyOtpAndRegisterController = async (req, res) => {
     res.status(500).json({ success: false, message: "Registration failed" });
   }
 };
-
-/* ===========================
-   LOGIN
-=========================== */
+// LOGIN 
 exports.loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -130,17 +123,13 @@ exports.loginController = async (req, res) => {
   }
 };
 
-/* ===========================
-   GET PROFILE
-=========================== */
+// GET PROFILE (PROTECTED)
 exports.getProfileController = async (req, res) => {
   const user = await User.findById(req.user.id).select("-password");
   res.json({ success: true, user });
 };
 
-/* ===========================
-   UPDATE AVATAR
-=========================== */
+// UPDATE AVATAR (PROTECTED)
 exports.updateAvatarController = async (req, res) => {
   let avatarUrl = "";
 
@@ -159,17 +148,13 @@ exports.updateAvatarController = async (req, res) => {
 
   res.json({ success: true, avatar: user.avatar });
 };
-/* ===========================
-   GET ALL USERS (ADMIN)
-=========================== */
+// GET ALL USERS (PROTECTED)
 exports.getAllUsers = async (req, res) => {
   const users = await User.find().select("-password");
   res.json({ success: true, users });
 };
 
-/* ===========================
-   SEND OTP (FORGOT PASSWORD)
-=========================== */
+  // SEND OTP (FORGOT PASSWORD)
 exports.sendForgotPasswordOtpController = async (req, res) => {
   const { email } = req.body;
 
@@ -196,9 +181,7 @@ exports.sendForgotPasswordOtpController = async (req, res) => {
   res.json({ success: true, message: "OTP sent" });
 };
 
-/* ===========================
-   VERIFY OTP & RESET PASSWORD
-=========================== */
+  //VERIFY OTP & RESET PASSWORD
 exports.verifyOtpAndResetPasswordController = async (req, res) => {
   const { email, otp, newPassword } = req.body;
 

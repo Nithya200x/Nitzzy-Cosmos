@@ -17,9 +17,7 @@ const BlogDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  /* ===========================
-     GET BLOG (PUBLIC)
-  =========================== */
+ // get blog details
   const getBlogDetail = useCallback(async () => {
     try {
       const { data } = await axios.get(
@@ -45,9 +43,7 @@ const BlogDetails = () => {
   const handleChange = (e) =>
     setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  /* ===========================
-     UPDATE BLOG (PROTECTED)
-  =========================== */
+ // update blog
   const handleSubmit = async (e) => {
     e.preventDefault();
 

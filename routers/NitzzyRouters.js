@@ -15,35 +15,28 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-/* ========= PUBLIC ROUTES ========= */
+//public routes
 
-// all blogs
 router.get("/all-blogs", getAllNitzzyController);
 
-// single blog (PUBLIC)
 router.get("/single-blog/:id", getNitzzyByIdController);
 
-/* ========= PROTECTED ROUTES ========= */
+// protected routes
 
-// create blog
 router.post("/create-blog", authMiddleware, createNitzzyController);
 
-// update blog (owner only)
+//owner only
 router.put("/update-blog/:id", authMiddleware, updateNitzzyController);
 
-// delete blog (soft delete)
+// soft del
 router.delete("/delete-blog/:id", authMiddleware, deleteNitzzyController);
 
-// logged-in user's blogs
 router.get("/user-blogs", authMiddleware, getUserNitzzyController);
 
-// trash
 router.get("/trash", authMiddleware, getDeletedBlogsController);
 
-// restore
 router.put("/restore/:id", authMiddleware, restoreBlogController);
-
-// permanent delete
+//hard del
 router.delete(
   "/permanent-delete/:id",
   authMiddleware,

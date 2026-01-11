@@ -32,7 +32,7 @@ const BlogCard = ({
 
       toast.success("Blog moved to trash 🗑️");
 
-      navigate("/trash"); // 🔥 THIS LINE FIXES THE DELAY
+      navigate("/trash"); 
     } catch (error) {
       toast.error(
         error?.response?.data?.message || "Delete failed"
