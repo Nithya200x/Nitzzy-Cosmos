@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-
+import Trash from "./Trash";
 const Profile = () => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
@@ -183,6 +183,13 @@ const Profile = () => {
             Joined: {new Date(user.createdAt).toLocaleDateString()}
           </p>
         </div>
+        <button
+  onClick={() => navigate("/trash")}
+  className="mt-6 px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700"
+>
+  View Trash
+</button>
+
       </div>
     </div>
   );

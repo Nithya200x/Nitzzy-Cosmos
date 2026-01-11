@@ -44,7 +44,7 @@ const Trash = () => {
       );
 
       toast.success("Blog restored");
-      fetchTrash(); // ✅ re-fetch instead of reload
+      fetchTrash(); // 
     } catch {
       toast.error("Failed to restore blog");
     }
@@ -62,7 +62,7 @@ const Trash = () => {
       );
 
       toast.success("Blog permanently deleted");
-      fetchTrash(); // ✅ re-fetch instead of reload
+      fetchTrash(); 
     } catch {
       toast.error("Failed to delete blog");
     }
