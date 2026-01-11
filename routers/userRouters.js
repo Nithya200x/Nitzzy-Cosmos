@@ -7,10 +7,11 @@ const {
   sendForgotPasswordOtpController,
   verifyOtpAndResetPasswordController,
   getProfileController,
+  updateAvatarController,
 } = require('../controllers/userController');
 
 const authMiddleware = require('../middleware/authMiddleware');
-
+const upload = require("../middleware/upload");
 // router obj
 const router = express.Router();
 
@@ -19,6 +20,24 @@ router.get('/all-users', authMiddleware, getAllUsers);
 
 // user profile || GET
 router.get("/profile", authMiddleware, getProfileController);
+
+// update user avatar || PUT
+router.put(
+  "/update-avatar",
+  authMiddleware,
+  (req, res, next) => {
+    upload.any()(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({
+          success: false,
+          message: err.message || "Upload error",
+        });
+      }
+      next();
+    });
+  },
+  updateAvatarController
+);
 
 
 // send OTP to email || POST

@@ -3,6 +3,8 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail.js');
+const cloudinary = require("../config/cloudinary");
+
 // Send OTP TO EMAIL
 exports.sendOtpController = async (req, res) => {
   try {
@@ -281,6 +283,57 @@ exports.verifyOtpAndResetPasswordController = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error in resetting password",
+    });
+  }
+};
+// UPDATE USER AVATAR
+exports.updateAvatarController = async (req, res) => {
+  try {
+    console.log("🔥 UPDATE AVATAR HIT");
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
+    let avatarUrl;
+
+    // CASE 1: Image upload
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "nitzzy-avatars",
+        width: 300,
+        height: 300,
+        crop: "fill",
+      });
+
+      avatarUrl = result.secure_url;
+    }
+    // CASE 2: Preset avatar OR remove avatar
+    else if (req.body.avatar !== undefined) {
+      avatarUrl = req.body.avatar; // can be URL or ""
+    } else {
+      return res.status(400).send({
+        success: false,
+        message: "No avatar data provided",
+      });
+    }
+
+    const user = await userModel.findByIdAndUpdate(
+      req.user.id,
+      { avatar: avatarUrl },
+      { new: true }
+    );
+
+    return res.status(200).send({
+      success: true,
+      message:
+        avatarUrl === ""
+          ? "Avatar removed successfully"
+          : "Avatar updated successfully",
+      avatar: user.avatar,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error updating avatar",
     });
   }
 };
