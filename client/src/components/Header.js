@@ -29,22 +29,34 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 backdrop-blur bg-black/40 border-b border-white/10">
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+        
         {/* LOGO */}
         <Link to="/" className="flex items-center gap-3">
-          <img
-            src={logo}
-            alt="Nitzzy Cosmos Logo"
-            className="
-              h-10 w-10 object-contain
-              transition-all duration-300
-              hover:scale-105
-              hover:drop-shadow-[0_0_22px_rgba(124,58,237,0.9)]
-            "
-          />
-          <span className="text-xl font-heading tracking-widest text-white">
-            Nitzzy <span className="text-indigo-400">Cosmos</span>
-          </span>
-        </Link>
+  <div
+    className="
+      h-11 w-11 rounded-full overflow-hidden
+      bg-black
+      ring-2 ring-indigo-400/60
+      shadow-[0_0_10px_rgba(99,102,241,0.6)]
+      flex items-center justify-center
+    "
+  >
+    <img
+      src={logo}
+      alt="Nitzzy Cosmos Logo"
+      className="
+        h-full w-full
+        object-cover
+        contrast-125
+        brightness-110
+      "
+    />
+  </div>
+
+  <span className="text-xl font-heading tracking-widest text-white">
+    Nitzzy <span className="text-indigo-400">Cosmos</span>
+  </span>
+</Link>
 
         {/* NAV */}
         <nav className="flex items-center gap-6 text-sm">
@@ -66,11 +78,7 @@ const Header = () => {
                 Profile
               </Link>
 
-              <Link className={isActive("/trash")} to="/trash">
-                Trash
-              </Link>
 
-              {/* ADMIN (future-ready, safe) */}
               {user?.role === "admin" && (
                 <Link className={isActive("/admin")} to="/admin">
                   Admin

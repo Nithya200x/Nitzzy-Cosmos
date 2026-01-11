@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
-
+import "./styles/cosmos.css";
 import Blogs from "./pages/Blogs";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -27,7 +27,7 @@ function App() {
   if (loading) return <CosmicLoader />;
 
   return (
-    <>
+    <div className="min-h-screen cosmos-nebula cosmos-stars">
       <Header />
       <Toaster position="top-center" />
 
@@ -77,7 +77,7 @@ function App() {
           }
         />
       </Routes>
-    </>
+    </div>
   );
 }
 

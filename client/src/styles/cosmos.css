@@ -1,0 +1,50 @@
+/* Floating stars */
+.cosmos-stars::before,
+.cosmos-stars::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-repeat: repeat;
+  z-index: -1;
+}
+
+/* Small stars */
+.cosmos-stars::before {
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.8) 50%, transparent 51%),
+    radial-gradient(1px 1px at 80% 70%, rgba(255,255,255,0.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 50% 90%, rgba(255,255,255,0.7) 50%, transparent 51%);
+  background-size: 200px 200px;
+  animation: starsFloat 80s linear infinite;
+}
+
+/* Larger stars */
+.cosmos-stars::after {
+  background-image:
+    radial-gradient(2px 2px at 40% 60%, rgba(255,255,255,0.5) 50%, transparent 51%),
+    radial-gradient(2px 2px at 70% 20%, rgba(255,255,255,0.4) 50%, transparent 51%);
+  background-size: 350px 350px;
+  animation: starsFloatReverse 160s linear infinite;
+}
+
+/* Animations */
+@keyframes starsFloat {
+  from { transform: translateY(0); }
+  to { transform: translateY(-1200px); }
+}
+
+@keyframes starsFloatReverse {
+  from { transform: translateY(0); }
+  to { transform: translateY(1000px); }
+}
+
+/* Nebula parallax */
+.cosmos-nebula {
+  background-image:
+    linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)),
+    url("/public/cosmos-bg.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}

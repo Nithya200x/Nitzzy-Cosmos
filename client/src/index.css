@@ -2,14 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply font-body bg-gradient-to-br from-[#050510] via-[#0a0a1f] to-[#050510] text-white;
-}
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-[#050510] via-[#0a0a1f] to-[#050510] text-white font-sans;
+  }
 
-h1,
-h2,
-h3,
-h4,
-h5 {
-  @apply font-heading tracking-wide;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    @apply tracking-wide font-semibold;
+  }
 }
