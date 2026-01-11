@@ -3,7 +3,8 @@ const EmailOtp = require("../models/emailOtpModel");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
-const sendEmail = require("../utils/sendEmail");
+const { Resend } = require("resend");
+const resend = new Resend(process.env.RESEND_API_KEY);
 const cloudinary = require("../config/cloudinary");
 
 // SEND OTP (FOR REGISTRATION)
@@ -33,12 +34,13 @@ exports.sendOtpController = async (req, res) => {
       otp,
       expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 mins
     });
-
-    await sendEmail(
-      email,
-      "Nitzzy Cosmos - Verify Email",
-      `<h2>Your OTP: ${otp}</h2><p>Valid for 10 minutes</p>`
-    );
+// resend email
+    await resend.emails.send({
+      from: "Nitzzy Cosmos <onboarding@resend.dev>",
+      to: email,
+      subject: "Nitzzy Cosmos - Verify Email",
+      html: `<h2>Your OTP: ${otp}</h2><p>Valid for 10 minutes</p>`,
+    });
 
     res.status(200).json({ success: true, message: "OTP sent" });
   } catch (err) {
@@ -174,29 +176,37 @@ exports.getAllUsers = async (req, res) => {
 
   // SEND OTP (FORGOT PASSWORD)
 exports.sendForgotPasswordOtpController = async (req, res) => {
-  const { email } = req.body;
+  try {
+    const { email } = req.body;
 
-  const user = await User.findOne({ email });
-  if (!user) {
-    return res.status(404).json({ success: false, message: "User not found" });
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+
+    await EmailOtp.deleteMany({ email });
+
+    await EmailOtp.create({
+      email,
+      otp,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    });
+
+    // resend email
+    await resend.emails.send({
+      from: "Nitzzy Cosmos <onboarding@resend.dev>",
+      to: email,
+      subject: "Nitzzy Cosmos - Reset Password",
+      html: `<h2>Your OTP: ${otp}</h2><p>Valid for 10 minutes</p>`,
+    });
+
+    res.json({ success: true, message: "OTP sent" });
+  } catch (error) {
+    console.error("Forgot password OTP error:", error);
+    res.status(500).json({ success: false, message: "OTP send failed" });
   }
-
-  const otp = crypto.randomInt(100000, 999999).toString();
-
-  await EmailOtp.deleteMany({ email });
-  await EmailOtp.create({
-    email,
-    otp,
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-  });
-
-  await sendEmail(
-    email,
-    "Nitzzy Cosmos - Reset Password",
-    `<h2>Your OTP: ${otp}</h2>`
-  );
-
-  res.json({ success: true, message: "OTP sent" });
 };
 
   //VERIFY OTP & RESET PASSWORD
