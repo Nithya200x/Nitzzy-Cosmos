@@ -12,19 +12,25 @@ const BlogDetails = () => {
     image: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   const { id } = useParams();
   const navigate = useNavigate();
 
+  /* ===========================
+     GET BLOG (PUBLIC)
+  =========================== */
   const getBlogDetail = useCallback(async () => {
     try {
       const { data } = await axios.get(
         `${API}/api/v1/nitzzy/single-blog/${id}`
       );
+
       if (data?.success) {
         setInputs({
-          title: data?.Nitzzy?.title || "",
-          description: data?.Nitzzy?.description || "",
-          image: data?.Nitzzy?.image || "",
+          title: data.Nitzzy.title || "",
+          description: data.Nitzzy.description || "",
+          image: data.Nitzzy.image || "",
         });
       }
     } catch {
@@ -39,19 +45,41 @@ const BlogDetails = () => {
   const handleChange = (e) =>
     setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
+  /* ===========================
+     UPDATE BLOG (PROTECTED)
+  =========================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please login first");
+      return;
+    }
+
     try {
+      setLoading(true);
+
       const { data } = await axios.put(
         `${API}/api/v1/nitzzy/update-blog/${id}`,
-        inputs
+        inputs,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // 🔑 FIX
+          },
+        }
       );
+
       if (data?.success) {
         toast.success("Blog updated successfully");
-        navigate("/my-blogs");
+        navigate("/my-blogs", { replace: true });
       }
-    } catch {
-      toast.error("Update failed");
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message || "Update failed"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -96,9 +124,14 @@ const BlogDetails = () => {
 
         <button
           type="submit"
-          className="mt-8 w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition"
+          disabled={loading}
+          className={`
+            mt-8 w-full py-3 rounded-xl
+            ${loading ? "bg-gray-600" : "bg-indigo-600 hover:bg-indigo-700"}
+            text-white font-semibold transition
+          `}
         >
-          Update Blog
+          {loading ? "Updating..." : "Update Blog"}
         </button>
       </form>
     </div>
