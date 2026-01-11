@@ -19,11 +19,6 @@ const Profile = () => {
       try {
         const token = localStorage.getItem("token");
 
-        if (!token) {
-          toast.error("Please login again");
-          navigate("/login");
-          return;
-        }
 
         const { data } = await axios.get(
           "http://localhost:8080/api/v1/user/profile",

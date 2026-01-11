@@ -30,7 +30,8 @@ const Header = () => {
 
   const handleLogout = () => {
     dispatch(authActions.logout());
-    localStorage.clear();
+    localStorage.removeItem("token");
+  localStorage.removeItem("user");
     toast.success("Logged out successfully");
     navigate("/login");
   };

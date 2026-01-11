@@ -1,339 +1,217 @@
-const userModel = require('../models/userModel.js');
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
-const sendEmail = require('../utils/sendEmail.js');
+const User = require("../models/userModel");
+const EmailOtp = require("../models/emailOtpModel");
+const bcrypt = require("bcrypt");
+const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
+const sendEmail = require("../utils/sendEmail");
 const cloudinary = require("../config/cloudinary");
 
-// Send OTP TO EMAIL
+/* ===========================
+   SEND OTP (REGISTER)
+=========================== */
 exports.sendOtpController = async (req, res) => {
   try {
     const { email } = req.body;
-
     if (!email) {
-      return res.status(400).send({
+      return res.status(400).json({ success: false, message: "Email required" });
+    }
+
+    // ❌ Prevent duplicate users
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
         success: false,
-        message: "Email is required",
+        message: "Email already registered",
       });
     }
 
     const otp = crypto.randomInt(100000, 999999).toString();
 
-    await userModel.findOneAndUpdate(
-      { email },
-      {
-        otp,
-        otpExpiry: Date.now() + 10 * 60 * 1000,
-      },
-      { upsert: true }
-    );
+    // Remove old OTPs for this email
+    await EmailOtp.deleteMany({ email });
+
+    await EmailOtp.create({
+      email,
+      otp,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 mins
+    });
 
     await sendEmail(
       email,
-      "Nitzzy Cosmos - Email Verification",
-      `<h2>Your OTP is: ${otp}</h2><p>Valid for 10 minutes</p>`
+      "Nitzzy Cosmos - Verify Email",
+      `<h2>Your OTP: ${otp}</h2><p>Valid for 10 minutes</p>`
     );
 
-    return res.status(200).send({
-      success: true,
-      message: "OTP sent to email",
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send({
-      success: false,
-      message: "Error in sending OTP",
-    });
+    res.status(200).json({ success: true, message: "OTP sent" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ success: false, message: "OTP send failed" });
   }
 };
 
-// GET LOGGED-IN USER PROFILE
-exports.getProfileController = async (req, res) => {
-  try {
-    const user = await userModel
-      .findById(req.user.id)
-      .select("-password -otp -otpExpiry");
-
-    if (!user) {
-      return res.status(404).send({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    return res.status(200).send({
-      success: true,
-      user,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send({
-      success: false,
-      message: "Error fetching profile",
-    });
-  }
-};
-
-//VERIFY OTP & REGISTER USER
+/* ===========================
+   VERIFY OTP & REGISTER
+=========================== */
 exports.verifyOtpAndRegisterController = async (req, res) => {
   try {
     const { username, email, password, otp } = req.body;
 
     if (!username || !email || !password || !otp) {
-      return res.status(400).send({
-        success: false,
-        message: "All fields including OTP are required",
-      });
+      return res.status(400).json({ success: false, message: "All fields required" });
     }
 
-    const user = await userModel.findOne({ email });
-
-    if (!user || user.otp !== otp || user.otpExpiry < Date.now()) {
-      return res.status(400).send({
-        success: false,
-        message: "Invalid or expired OTP",
-      });
+    const record = await EmailOtp.findOne({ email, otp });
+    if (!record) {
+      return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    user.username = username;
-    user.password = hashedPassword;
-    user.isVerified = true;
-    user.otp = null;
-    user.otpExpiry = null;
+    const user = await User.create({
+      username,
+      email,
+      password: hashedPassword,
+      isVerified: true,
+    });
 
-    await user.save();
+    // Clean OTP
+    await EmailOtp.deleteMany({ email });
 
-    return res.status(201).send({
+    res.status(201).json({
       success: true,
       message: "User registered successfully",
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+      },
     });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send({
-      success: false,
-      message: "Error in verifying OTP & registering user",
-    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ success: false, message: "Registration failed" });
   }
 };
 
-// GET ALL USERS
-exports.getAllUsers = async (req, res) => {
-  try {
-    const users = await userModel.find({});
-    return res.status(200).send({
-      userCount: users.length,
-      success: true,
-      users,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send({
-      success: false,
-      message: "Error in getting all users",
-    });
-  }
-};
-
-//LOGIN + JWT TOKEN 
+/* ===========================
+   LOGIN
+=========================== */
 exports.loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).send({
-        success: false,
-        message: "Please fill all the fields",
-      });
-    }
-
-    const user = await userModel.findOne({ email });
-
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).send({
-        success: false,
-        message: "Email not found, please register",
-      });
-    }
-
-    if (!user.isVerified) {
-      return res.status(401).send({
-        success: false,
-        message: "Please verify your email first",
-      });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).send({
-        success: false,
-        message: "Invalid password",
-      });
+      return res.status(401).json({ success: false, message: "Invalid password" });
     }
-   // checking 
-   console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
-    // CREATEING JWT TOKEN
     const token = jwt.sign(
       { id: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    return res.status(200).send({
+    res.status(200).json({
       success: true,
-      message: "User logged in successfully",
       token,
       user: {
         id: user._id,
-        username: user.username,
         email: user.email,
+        username: user.username,
       },
     });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send({
-      success: false,
-      message: "Error in user login",
-    });
-  }
-};
-// FORGOT PASSWORD: SEND OTP 
-exports.sendForgotPasswordOtpController = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).send({
-        success: false,
-        message: "Email is required",
-      });
-    }
-
-    const user = await userModel.findOne({ email });
-
-    if (!user) {
-      return res.status(404).send({
-        success: false,
-        message: "Email not registered",
-      });
-    }
-
-    const otp = crypto.randomInt(100000, 999999).toString();
-
-    user.otp = otp;
-    user.otpExpiry = Date.now() + 10 * 60 * 1000;
-    await user.save();
-
-    await sendEmail(
-      email,
-      "Nitzzy Cosmos - Password Reset OTP",
-      `<h2>Your password reset OTP is: ${otp}</h2><p>Valid for 10 minutes</p>`
-    );
-
-    return res.status(200).send({
-      success: true,
-      message: "Password reset OTP sent to email",
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send({
-      success: false,
-      message: "Error in sending password reset OTP",
-    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ success: false, message: "Login failed" });
   }
 };
 
-// FORGOT PASSWORD: VERIFY OTP & RESET PASSWORD
-exports.verifyOtpAndResetPasswordController = async (req, res) => {
-  try {
-    const { email, otp, newPassword } = req.body;
-
-    if (!email || !otp || !newPassword) {
-      return res.status(400).send({
-        success: false,
-        message: "Email, OTP and new password are required",
-      });
-    }
-
-    const user = await userModel.findOne({ email });
-
-    if (!user || user.otp !== otp || user.otpExpiry < Date.now()) {
-      return res.status(400).send({
-        success: false,
-        message: "Invalid or expired OTP",
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    user.password = hashedPassword;
-    user.otp = null;
-    user.otpExpiry = null;
-
-    await user.save();
-
-    return res.status(200).send({
-      success: true,
-      message: "Password reset successfully",
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send({
-      success: false,
-      message: "Error in resetting password",
-    });
-  }
+/* ===========================
+   GET PROFILE
+=========================== */
+exports.getProfileController = async (req, res) => {
+  const user = await User.findById(req.user.id).select("-password");
+  res.json({ success: true, user });
 };
-// UPDATE USER AVATAR
+
+/* ===========================
+   UPDATE AVATAR
+=========================== */
 exports.updateAvatarController = async (req, res) => {
-  try {
-    console.log("🔥 UPDATE AVATAR HIT");
-    console.log("BODY:", req.body);
-    console.log("FILE:", req.file);
-    let avatarUrl;
+  let avatarUrl = "";
 
-    // CASE 1: Image upload
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "nitzzy-avatars",
-        width: 300,
-        height: 300,
-        crop: "fill",
-      });
-
-      avatarUrl = result.secure_url;
-    }
-    // CASE 2: Preset avatar OR remove avatar
-    else if (req.body.avatar !== undefined) {
-      avatarUrl = req.body.avatar; // can be URL or ""
-    } else {
-      return res.status(400).send({
-        success: false,
-        message: "No avatar data provided",
-      });
-    }
-
-    const user = await userModel.findByIdAndUpdate(
-      req.user.id,
-      { avatar: avatarUrl },
-      { new: true }
-    );
-
-    return res.status(200).send({
-      success: true,
-      message:
-        avatarUrl === ""
-          ? "Avatar removed successfully"
-          : "Avatar updated successfully",
-      avatar: user.avatar,
+  if (req.file) {
+    const upload = await cloudinary.uploader.upload(req.file.path, {
+      folder: "nitzzy-avatars",
     });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send({
-      success: false,
-      message: "Error updating avatar",
-    });
+    avatarUrl = upload.secure_url;
   }
+
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    { avatar: avatarUrl },
+    { new: true }
+  );
+
+  res.json({ success: true, avatar: user.avatar });
 };
+/* ===========================
+   GET ALL USERS (ADMIN)
+=========================== */
+exports.getAllUsers = async (req, res) => {
+  const users = await User.find().select("-password");
+  res.json({ success: true, users });
+};
+
+/* ===========================
+   SEND OTP (FORGOT PASSWORD)
+=========================== */
+exports.sendForgotPasswordOtpController = async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  const otp = crypto.randomInt(100000, 999999).toString();
+
+  await EmailOtp.deleteMany({ email });
+  await EmailOtp.create({
+    email,
+    otp,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+  });
+
+  await sendEmail(
+    email,
+    "Nitzzy Cosmos - Reset Password",
+    `<h2>Your OTP: ${otp}</h2>`
+  );
+
+  res.json({ success: true, message: "OTP sent" });
+};
+
+/* ===========================
+   VERIFY OTP & RESET PASSWORD
+=========================== */
+exports.verifyOtpAndResetPasswordController = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+
+  const record = await EmailOtp.findOne({ email, otp });
+  if (!record) {
+    return res.status(400).json({ success: false, message: "Invalid OTP" });
+  }
+
+  const hashed = await bcrypt.hash(newPassword, 10);
+  await User.findOneAndUpdate({ email }, { password: hashed });
+
+  await EmailOtp.deleteMany({ email });
+
+  res.json({ success: true, message: "Password reset successful" });
+};
+

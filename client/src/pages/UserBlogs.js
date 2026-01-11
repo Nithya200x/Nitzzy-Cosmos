@@ -1,46 +1,70 @@
-// client/src/pages/UserBlogs.js
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import BlogCard from "../components/BlogCard";
+import toast from "react-hot-toast";
 
 const API = "http://localhost:8080";
 
 const UserBlogs = () => {
   const [blogs, setBlogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
   const getUserBlogs = async () => {
     try {
-      const id = localStorage.getItem("userId");
-      if (!id) {
-        // Not logged in — nothing to fetch
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        toast.error("Please login first");
         setBlogs([]);
         return;
       }
-      const { data } = await axios.get(`${API}/api/v1/nitzzy/user-blog/${id}`);
+
+      setLoading(true);
+
+      const { data } = await axios.get(
+        `${API}/api/v1/nitzzy/user-blogs`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       if (data?.success) {
-        setBlogs(data?.Nitzzy || []);
+        setBlogs(data.Nitzzy || []);
       } else {
         setBlogs([]);
       }
     } catch (error) {
-      console.log("Error fetching user blogs:", error);
+      console.error("Error fetching user blogs:", error);
       setBlogs([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     getUserBlogs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [location.pathname]); // 🔑 refetch on navigation
+
+  if (loading) {
+    return (
+      <h3 style={{ textAlign: "center", marginTop: "2rem" }}>
+        Loading your blogs...
+      </h3>
+    );
+  }
 
   return (
     <div>
-      {blogs && blogs.length > 0 ? (
+      {blogs.length > 0 ? (
         blogs.map((blog) => (
           <BlogCard
             key={blog._id}
             id={blog._id}
-            isUser={localStorage.getItem("userId") === blog?.user?._id}
+            isUser={true}
             title={blog.title}
             description={blog.description}
             image={blog.image}

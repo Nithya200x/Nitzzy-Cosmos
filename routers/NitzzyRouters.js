@@ -1,64 +1,53 @@
 const express = require("express");
-const NitzzyCtrl = require("../controllers/NitzzyController.js");
+const {
+  getAllNitzzyController,
+  createNitzzyController,
+  updateNitzzyController,
+  getNitzzyByIdController,
+  deleteNitzzyController,
+  getDeletedBlogsController,
+  restoreBlogController,
+  permanentDeleteBlogController,
+  getUserNitzzyController,
+} = require("../controllers/NitzzyController");
+
 const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// PUBLIC ROUTES 
-//
-// GET || all blogs
-router.get("/all-blogs", NitzzyCtrl.getAllNitzzyController);
+/* ========= PUBLIC ROUTES ========= */
 
-// GET || single blog
-router.get("/single-blog/:id", NitzzyCtrl.getNitzzyByIdController);
+// all blogs
+router.get("/all-blogs", getAllNitzzyController);
 
-// GET || user blogs 
-router.get("/user-blog/:id", NitzzyCtrl.getUserNitzzyController);
+// single blog (PUBLIC)
+router.get("/single-blog/:id", getNitzzyByIdController);
 
-// PROTECTED ROUTES (JWT REQUIRED) 
-//
-// POST || create blog
-router.post(
-  "/create-blog",
-  authMiddleware,
-  NitzzyCtrl.createNitzzyController
-);
+/* ========= PROTECTED ROUTES ========= */
 
-// PUT || update blog
-router.put(
-  "/update-blog/:id",
-  authMiddleware,
-  NitzzyCtrl.updateNitzzyController
-);
+// create blog
+router.post("/create-blog", authMiddleware, createNitzzyController);
 
-// DELETE || soft delete blog (move to trash)
-router.delete(
-  "/delete-blog/:id",
-  authMiddleware,
-  NitzzyCtrl.deleteNitzzyController
-);
+// update blog (owner only)
+router.put("/update-blog/:id", authMiddleware, updateNitzzyController);
 
-// TRASH MANAGEMENT 
-//
-// GET || trashed blogs (user profile)
-router.get(
-  "/trash",
-  authMiddleware,
-  NitzzyCtrl.getDeletedBlogsController
-);
+// delete blog (soft delete)
+router.delete("/delete-blog/:id", authMiddleware, deleteNitzzyController);
 
-// PUT || restore blog from trash
-router.put(
-  "/restore/:id",
-  authMiddleware,
-  NitzzyCtrl.restoreBlogController
-);
+// logged-in user's blogs
+router.get("/user-blogs", authMiddleware, getUserNitzzyController);
 
-// DELETE || permanent delete blog
+// trash
+router.get("/trash", authMiddleware, getDeletedBlogsController);
+
+// restore
+router.put("/restore/:id", authMiddleware, restoreBlogController);
+
+// permanent delete
 router.delete(
   "/permanent-delete/:id",
   authMiddleware,
-  NitzzyCtrl.permanentDeleteBlogController
+  permanentDeleteBlogController
 );
 
 module.exports = router;

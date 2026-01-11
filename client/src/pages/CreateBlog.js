@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 
 const CreateBlog = () => {
   const navigate = useNavigate();
-  const userId = localStorage.getItem("userId");
 
   const [inputs, setInputs] = useState({
     title: "",
@@ -13,40 +12,61 @@ const CreateBlog = () => {
     image: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e) =>
     setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!userId) {
-      toast.error("Please login first");
-      navigate("/login");
-      return;
-    }
-
     if (!inputs.title || !inputs.description) {
       toast.error("Title and description are required");
       return;
     }
 
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please login first");
+      return;
+    }
+
     try {
+      setLoading(true);
+
       const { data } = await axios.post(
         "http://localhost:8080/api/v1/nitzzy/create-blog",
         {
           title: inputs.title,
           description: inputs.description,
           image: inputs.image,
-          user: userId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
       if (data?.success) {
         toast.success("Blog published ✨");
-        navigate("/my-blogs");
+
+        // clear form
+        setInputs({
+          title: "",
+          description: "",
+          image: "",
+        });
+
+        // navigate cleanly
+        navigate("/my-blogs", { replace: true });
       }
-    } catch {
-      toast.error("Failed to create blog");
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message || "Failed to create blog"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,17 +82,15 @@ const CreateBlog = () => {
           shadow-[0_0_80px_rgba(124,58,237,0.35)]
         "
       >
-        {/* HEADER */}
         <h1 className="text-4xl font-heading text-center mb-3">
           Create a New Story
         </h1>
+
         <p className="text-center text-gray-400 mb-10">
           Share your thoughts with the Nitzzy Cosmos
         </p>
 
-        {/* INPUTS */}
         <div className="space-y-8">
-          {/* TITLE */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">
               Blog Title
@@ -92,7 +110,6 @@ const CreateBlog = () => {
             />
           </div>
 
-          {/* DESCRIPTION */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">
               Blog Content
@@ -113,7 +130,6 @@ const CreateBlog = () => {
             />
           </div>
 
-          {/* IMAGE */}
           <div>
             <label className="block text-sm text-gray-300 mb-2">
               Cover Image (optional)
@@ -133,17 +149,17 @@ const CreateBlog = () => {
           </div>
         </div>
 
-        {/* SUBMIT */}
         <button
           type="submit"
-          className="
+          disabled={loading}
+          className={`
             mt-12 w-full py-4 rounded-xl
-            bg-indigo-600 hover:bg-indigo-700
+            ${loading ? "bg-gray-600" : "bg-indigo-600 hover:bg-indigo-700"}
             text-white font-semibold text-lg
             transition
-          "
+          `}
         >
-          Publish Blog
+          {loading ? "Publishing..." : "Publish Blog"}
         </button>
       </form>
     </div>
