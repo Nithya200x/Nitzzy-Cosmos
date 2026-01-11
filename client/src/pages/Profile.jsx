@@ -20,7 +20,7 @@ const Profile = () => {
 
 
         const { data } = await axios.get(
-          "http://localhost:8080/api/v1/user/profile",
+          "${process.env.REACT_APP_API}/api/v1/user/profile",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -44,7 +44,7 @@ const handlePresetAvatar = async (avatarUrl) => {
     const token = localStorage.getItem("token");
 
     const { data } = await axios.put(
-      "http://localhost:8080/api/v1/user/update-avatar",
+      "${process.env.REACT_APP_API}/api/v1/user/update-avatar",
       { avatar: avatarUrl },   // ✅ JSON body
       {
         headers: {
@@ -71,7 +71,7 @@ const handlePresetAvatar = async (avatarUrl) => {
     const token = localStorage.getItem("token");
 
     await axios.put(
-      "http://localhost:8080/api/v1/user/update-avatar",
+      "${process.env.REACT_APP_API}/api/v1/user/update-avatar",
       { avatar: "" },
       {
         headers: {

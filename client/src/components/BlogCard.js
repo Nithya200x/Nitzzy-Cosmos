@@ -22,7 +22,7 @@ const BlogCard = ({
       const token = localStorage.getItem("token");
 
       await axios.delete(
-        `http://localhost:8080/api/v1/nitzzy/delete-blog/${id}`,
+        `${process.env.REACT_APP_API}/api/v1/nitzzy/delete-blog/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

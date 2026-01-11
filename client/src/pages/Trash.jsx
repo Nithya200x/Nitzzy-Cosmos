@@ -11,7 +11,7 @@ const Trash = () => {
       const token = localStorage.getItem("token");
 
       const { data } = await axios.get(
-        "http://localhost:8080/api/v1/nitzzy/trash",
+        "${process.env.REACT_APP_API}/api/v1/nitzzy/trash",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -36,7 +36,7 @@ const Trash = () => {
       const token = localStorage.getItem("token");
 
       await axios.put(
-        `http://localhost:8080/api/v1/nitzzy/restore/${id}`,
+        `${process.env.REACT_APP_API}/api/v1/nitzzy/restore/${id}`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -55,7 +55,7 @@ const Trash = () => {
       const token = localStorage.getItem("token");
 
       await axios.delete(
-        `http://localhost:8080/api/v1/nitzzy/permanent-delete/${id}`,
+        `${process.env.REACT_APP_API}/api/v1/nitzzy/permanent-delete/${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

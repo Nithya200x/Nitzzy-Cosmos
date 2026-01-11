@@ -30,7 +30,7 @@ const Register = () => {
     try {
       setLoading(true);
       await axios.post(
-        "http://localhost:8080/api/v1/user/send-otp",
+        "${process.env.REACT_APP_API}/api/v1/user/send-otp",
         { email: inputs.email }
       );
       toast.success("OTP sent to your email");
@@ -53,7 +53,7 @@ const Register = () => {
 
     try {
       const { data } = await axios.post(
-        "http://localhost:8080/api/v1/user/verify-otp",
+        "${process.env.REACT_APP_API}/api/v1/user/verify-otp",
         {
           username: inputs.name,
           email: inputs.email,

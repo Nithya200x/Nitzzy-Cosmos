@@ -23,7 +23,7 @@ const Login = () => {
 
     try {
       const { data } = await axios.post(
-        "http://localhost:8080/api/v1/user/login",
+        "${process.env.REACT_APP_API}/api/v1/user/login",
         inputs
       );
 

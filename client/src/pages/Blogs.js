@@ -9,7 +9,7 @@ const Blogs = () => {
   const getAllBlogs = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:8080/api/v1/nitzzy/all-blogs"
+        "${process.env.REACT_APP_API}/api/v1/nitzzy/all-blogs"
       );
       if (data?.success) {
         setBlogs(data?.Nitzzy || []);

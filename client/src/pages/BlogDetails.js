@@ -3,7 +3,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 
-const API = "http://localhost:8080";
+const API = "${process.env.REACT_APP_API}";
 
 const BlogDetails = () => {
   const [inputs, setInputs] = useState({

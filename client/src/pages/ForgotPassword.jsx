@@ -18,7 +18,7 @@ const ForgotPassword = () => {
 
     try {
       await axios.post(
-        "http://localhost:8080/api/v1/user/forgot-password/send-otp",
+        "${process.env.REACT_APP_API}/api/v1/user/forgot-password/send-otp",
         { email }
       );
       toast.success("OTP sent to email");
@@ -36,7 +36,7 @@ const ForgotPassword = () => {
 
     try {
       await axios.post(
-        "http://localhost:8080/api/v1/user/forgot-password/reset",
+        "${process.env.REACT_APP_API}/api/v1/user/forgot-password/reset",
         {
           email,
           otp,

@@ -4,7 +4,7 @@ import axios from "axios";
 import BlogCard from "../components/BlogCard";
 import toast from "react-hot-toast";
 
-const API = "http://localhost:8080";
+const API = "${process.env.REACT_APP_API}";
 
 const UserBlogs = () => {
   const [blogs, setBlogs] = useState([]);
