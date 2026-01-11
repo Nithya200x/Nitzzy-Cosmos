@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import Trash from "./Trash";
 const Profile = () => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
@@ -37,67 +36,69 @@ const Profile = () => {
     };
 
     fetchProfile();
-  }, [navigate]);
+  }, []);
 
   // Select preset avatar
-  const handlePresetAvatar = async (avatarUrl) => {
-    try {
-      if (!avatarUrl) return;
+const handlePresetAvatar = async (avatarUrl) => {
+  try {
+    const token = localStorage.getItem("token");
 
-      const token = localStorage.getItem("token");
-      const formData = new FormData();
-      formData.append("avatar", avatarUrl);
+    const { data } = await axios.put(
+      "http://localhost:8080/api/v1/user/update-avatar",
+      { avatar: avatarUrl },   // ✅ JSON body
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-      const { data } = await axios.put(
-        "http://localhost:8080/api/v1/user/update-avatar",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+    const updatedUser = { ...user, avatar: data.avatar };
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
 
-      const updatedUser = { ...user, avatar: data.avatar };
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-
-      toast.success("Avatar updated");
-    } catch (error) {
-      toast.error(error?.response?.data?.message || "Avatar update failed");
-    }
-  };
+    toast.success("Avatar updated");
+  } catch (error) {
+    console.error(error);
+    toast.error("Avatar update failed");
+  }
+};
 
   // Remove avatar
   const handleRemoveAvatar = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const formData = new FormData();
-      formData.append("avatar", "");
+  try {
+    const token = localStorage.getItem("token");
 
-      await axios.put(
-        "http://localhost:8080/api/v1/user/update-avatar",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+    await axios.put(
+      "http://localhost:8080/api/v1/user/update-avatar",
+      { avatar: "" },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    const updatedUser = { ...user, avatar: "" };
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
 
-      const updatedUser = { ...user, avatar: "" };
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+    toast.success("Avatar removed");
+  } catch {
+    toast.error("Avatar removal failed");
+  }
+};
 
-      toast.success("Avatar removed");
-    } catch (error) {
-      toast.error(error?.response?.data?.message || "Avatar removal failed");
-    }
-  };
-
+const token = localStorage.getItem("token");
+if (!token) {
+  toast.error("Session expired. Please login again.");
+  navigate("/login");
+  return;
+}
   const avatarSrc =
     user?.avatar && user.avatar !== ""
-      ? user.avatar
+      ? `${user.avatar}?v=${new Date().getTime()}`
       : `https://ui-avatars.com/api/?name=${encodeURIComponent(
           user?.username || "User"
         )}&background=6d28d9&color=fff`;

@@ -131,22 +131,40 @@ exports.getProfileController = async (req, res) => {
 
 // UPDATE AVATAR (PROTECTED)
 exports.updateAvatarController = async (req, res) => {
-  let avatarUrl = "";
+  try {
+    const { avatar } = req.body;
+console.log("AVATAR RECEIVED:", req.body.avatar);
+    if (avatar === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "Avatar path is required",
+      });
+    }
 
-  if (req.file) {
-    const upload = await cloudinary.uploader.upload(req.file.path, {
-      folder: "nitzzy-avatars",
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { avatar },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      avatar: user.avatar,
     });
-    avatarUrl = upload.secure_url;
+  } catch (error) {
+    console.error("Avatar update error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Avatar update failed",
+    });
   }
-
-  const user = await User.findByIdAndUpdate(
-    req.user.id,
-    { avatar: avatarUrl },
-    { new: true }
-  );
-
-  res.json({ success: true, avatar: user.avatar });
 };
 // GET ALL USERS (PROTECTED)
 exports.getAllUsers = async (req, res) => {
