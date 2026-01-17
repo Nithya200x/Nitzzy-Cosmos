@@ -34,7 +34,7 @@ exports.googleAuthController = async (req, res) => {
         googleId: sub,
         avatar: picture || "",
         isVerified: true,
-        password: null, // IMPORTANT: Google-only user
+        password: null, //Google only user
       });
     }
 
@@ -63,9 +63,58 @@ exports.googleAuthController = async (req, res) => {
   }
 };
 
-/**
- * EMAIL + PASSWORD LOGIN
- */
+// Manual registration (email + password)
+exports.registerController = async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "User already exists",
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await User.create({
+      username,
+      email,
+      password: hashedPassword,
+      isVerified: true,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+      },
+    });
+  } catch (error) {
+    console.error("Register Error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Registration failed",
+    });
+  }
+};
+
+//EMAIL + PASSWORD LOGIN
+
 exports.loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -78,7 +127,7 @@ exports.loginController = async (req, res) => {
       });
     }
 
-    // 🚫 Prevent Google-only users from password login
+    // Prevent Google-only users from password login
     if (!user.password) {
       return res.status(400).json({
         success: false,

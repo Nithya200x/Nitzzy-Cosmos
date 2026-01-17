@@ -2,6 +2,7 @@ const express = require("express");
 const {
   getAllUsers,
   loginController,
+  registerController,
   getProfileController,
   updateAvatarController,
   googleAuthController,
@@ -14,6 +15,9 @@ const router = express.Router();
 
 //GOOGLE AUTH (PUBLIC)
 router.post("/google-auth", googleAuthController);
+
+// Manual register || post (public)
+router.post("/register", registerController);
 
 //EMAIL + PASSWORD LOGIN (PUBLIC)
 
