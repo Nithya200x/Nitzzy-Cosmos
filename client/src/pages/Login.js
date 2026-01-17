@@ -4,6 +4,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { authActions } from "../redux/store";
+import { GoogleLogin } from "@react-oauth/google";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,31 +14,34 @@ const Login = () => {
     email: "",
     password: "",
   });
+
   const [showPassword, setShowPassword] = useState(false);
 
+  // Handle input changes
   const handleChange = (e) =>
     setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
+  // Email + password login
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       const { data } = await axios.post(
-        "${process.env.REACT_APP_API}/api/v1/user/login",
+        `${process.env.REACT_APP_API}/api/v1/user/login`,
         inputs
       );
 
       if (data?.success) {
-        // ✅ Persist JWT
+        // Save JWT
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        // ✅ Attach token globally
+        // Attach token globally
         axios.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${data.token}`;
 
-        // ✅ Update Redux (THIS enables ProtectedRoute)
+        // Update Redux (enables ProtectedRoute)
         dispatch(authActions.login(data.user));
 
         toast.success("Welcome back ✨");
@@ -47,6 +51,35 @@ const Login = () => {
       toast.error(
         error?.response?.data?.message || "Invalid credentials"
       );
+    }
+  };
+
+  // Google login handler
+  const handleGoogleLogin = async (credential) => {
+    try {
+      const { data } = await axios.post(
+        `${process.env.REACT_APP_API}/api/v1/user/google-auth`,
+        { credential }
+      );
+
+      if (data?.success) {
+        // Save JWT
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        // Attach token globally
+        axios.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${data.token}`;
+
+        // Update Redux
+        dispatch(authActions.login(data.user));
+
+        toast.success("Signed in with Google ✨");
+        navigate("/");
+      }
+    } catch (error) {
+      toast.error("Google sign-in failed");
     }
   };
 
@@ -83,7 +116,7 @@ const Login = () => {
               focus:outline-none focus:border-indigo-500"
           />
 
-          {/* PASSWORD */}
+          // Password input
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -107,7 +140,7 @@ const Login = () => {
             </button>
           </div>
 
-          {/* FORGOT PASSWORD */}
+          // Forgot password
           <p
             onClick={() => navigate("/forgot-password")}
             className="text-sm text-indigo-400 cursor-pointer hover:underline"
@@ -124,6 +157,14 @@ const Login = () => {
         >
           Sign In
         </button>
+
+        // Google login button
+        <div className="mt-6 flex justify-center">
+          <GoogleLogin
+            onSuccess={(res) => handleGoogleLogin(res.credential)}
+            onError={() => toast.error("Google sign-in failed")}
+          />
+        </div>
 
         <p className="text-center text-sm text-gray-400 mt-6">
           New to Nitzzy Cosmos?{" "}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { GoogleLogin } from "@react-oauth/google";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -12,64 +13,65 @@ const Register = () => {
     password: "",
   });
 
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Handle input change
   const handleChange = (e) =>
     setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  // SEND OTP
-  const sendOtp = async () => {
-    if (!inputs.email) {
-      toast.error("Please enter email first");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await axios.post(
-        "${process.env.REACT_APP_API}/api/v1/user/send-otp",
-        { email: inputs.email }
-      );
-      toast.success("OTP sent to your email");
-      setOtpSent(true);
-    } catch {
-      toast.error("Failed to send OTP");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // VERIFY OTP & REGISTER
+  // Manual registration (email + password)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!inputs.name || !inputs.email || !inputs.password || !otp) {
-      toast.error("Please fill all fields including OTP");
+    if (!inputs.name || !inputs.email || !inputs.password) {
+      toast.error("Please fill all fields");
       return;
     }
 
     try {
       const { data } = await axios.post(
-        "${process.env.REACT_APP_API}/api/v1/user/verify-otp",
+        `${process.env.REACT_APP_API}/api/v1/user/register`,
         {
           username: inputs.name,
           email: inputs.email,
           password: inputs.password,
-          otp,
         }
       );
 
       if (data?.success) {
         toast.success("Account created successfully ✨");
         navigate("/login");
-      } else {
-        toast.error(data?.message || "Registration failed");
+      }
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message || "Registration failed"
+      );
+    }
+  };
+
+  // Google signup / login
+  const handleGoogleSignup = async (credential) => {
+    try {
+      const { data } = await axios.post(
+        `${process.env.REACT_APP_API}/api/v1/user/google-auth`,
+        { credential }
+      );
+
+      if (data?.success) {
+        // Save JWT
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        // Attach token globally
+        axios.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${data.token}`;
+
+        toast.success("Signed up with Google ✨");
+        navigate("/");
       }
     } catch {
-      toast.error("Invalid or expired OTP");
+      toast.error("Google sign-up failed");
     }
   };
 
@@ -88,6 +90,7 @@ const Register = () => {
         <h1 className="text-3xl font-heading text-center mb-2">
           Join Nitzzy Cosmos 🚀
         </h1>
+
         <p className="text-center text-gray-400 mb-8">
           Create your account and start writing beyond the stars
         </p>
@@ -97,7 +100,6 @@ const Register = () => {
             name="name"
             placeholder="Your name"
             onChange={handleChange}
-            required
             className="w-full rounded-lg px-4 py-3
               bg-black/40 text-white
               border border-white/10
@@ -109,46 +111,19 @@ const Register = () => {
             type="email"
             placeholder="Email address"
             onChange={handleChange}
-            required
             className="w-full rounded-lg px-4 py-3
               bg-black/40 text-white
               border border-white/10
               focus:outline-none focus:border-indigo-500"
           />
 
-          {/* Send OTP */}
-          <button
-            type="button"
-            onClick={sendOtp}
-            disabled={loading}
-            className="w-full py-2 rounded-lg
-              bg-indigo-500 hover:bg-indigo-600
-              text-white font-medium transition"
-          >
-            {loading ? "Sending OTP..." : "Send OTP"}
-          </button>
-
-          {/* OTP Input */}
-          {otpSent && (
-            <input
-              placeholder="Enter OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              className="w-full rounded-lg px-4 py-3
-                bg-black/40 text-white
-                border border-white/10
-                focus:outline-none focus:border-indigo-500"
-            />
-          )}
-
-          {/* Password */}
+          // Password input (optional if using Google)
           <div className="relative">
             <input
               name="password"
               type={showPassword ? "text" : "password"}
-              placeholder="Password"
+              placeholder="Password (optional)"
               onChange={handleChange}
-              required
               className="w-full rounded-lg px-4 py-3 pr-16
                 bg-black/40 text-white
                 border border-white/10
@@ -172,8 +147,16 @@ const Register = () => {
             bg-indigo-600 hover:bg-indigo-700
             text-white font-semibold transition"
         >
-          Verify & Create Account
+          Create Account
         </button>
+
+        // Google sign up
+        <div className="mt-6 flex justify-center">
+          <GoogleLogin
+            onSuccess={(res) => handleGoogleSignup(res.credential)}
+            onError={() => toast.error("Google sign-up failed")}
+          />
+        </div>
 
         <p className="text-center text-sm text-gray-400 mt-6">
           Already have an account?{" "}
