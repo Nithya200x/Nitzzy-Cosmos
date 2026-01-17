@@ -1,27 +1,32 @@
-const express = require('express');
+const express = require("express");
 const {
   getAllUsers,
   loginController,
-  sendOtpController,
-  verifyOtpAndRegisterController,
-  sendForgotPasswordOtpController,
-  verifyOtpAndResetPasswordController,
   getProfileController,
   updateAvatarController,
-} = require('../controllers/userController');
+  googleAuthController,
+} = require("../controllers/userController");
 
-const authMiddleware = require('../middleware/authMiddleware');
+const authMiddleware = require("../middleware/authMiddleware");
 const upload = require("../middleware/upload");
-// router obj
+
 const router = express.Router();
 
-// protected routes (JWT req) || GET
-router.get('/all-users', authMiddleware, getAllUsers);
+//GOOGLE AUTH (PUBLIC)
+router.post("/google-auth", googleAuthController);
 
-// user profile || GET
+//EMAIL + PASSWORD LOGIN (PUBLIC)
+
+router.post("/login", loginController);
+
+//GET PROFILE (PROTECTED)
 router.get("/profile", authMiddleware, getProfileController);
 
-// update user avatar || PUT
+// GET ALL USERS (PROTECTED)
+ router.get("/all-users", authMiddleware, getAllUsers);
+
+//UPDATE AVATAR (PROTECTED)
+
 router.put(
   "/update-avatar",
   authMiddleware,
@@ -38,20 +43,5 @@ router.put(
   },
   updateAvatarController
 );
-
-
-// send OTP to email || POST
-router.post('/send-otp', sendOtpController);
-
-// verify OTP & register user || POST
-router.post('/verify-otp', verifyOtpAndRegisterController);
-
-// login user || POST
-router.post('/login', loginController);
-
-// forgot password|| POST
-router.post('/forgot-password/send-otp', sendForgotPasswordOtpController);
-router.post('/forgot-password/reset', verifyOtpAndResetPasswordController);
-
 
 module.exports = router;
