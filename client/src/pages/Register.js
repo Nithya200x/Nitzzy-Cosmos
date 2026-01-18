@@ -5,7 +5,15 @@ import toast from "react-hot-toast";
 import { GoogleLogin } from "@react-oauth/google";
 
 const Register = () => {
-  const navigate = useNavigate();
+  console.log(
+  "REACT_APP_API =",
+  process.env.REACT_APP_API
+);
+console.log(
+  "REACT_APP_GOOGLE_CLIENT_ID =",
+  process.env.REACT_APP_GOOGLE_CLIENT_ID
+);
+const navigate = useNavigate();
 
   const [inputs, setInputs] = useState({
     name: "",

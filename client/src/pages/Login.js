@@ -7,6 +7,7 @@ import { authActions } from "../redux/store";
 import { GoogleLogin } from "@react-oauth/google";
 
 const Login = () => {
+  console.log("REACT_APP_API =", process.env.REACT_APP_API);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
