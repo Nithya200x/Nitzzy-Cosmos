@@ -15,3 +15,21 @@
     @apply tracking-wide font-semibold;
   }
 }
+
+@keyframes glossyShine {
+  0% {
+    transform: translateX(-50%) rotate(12deg);
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.22;
+  }
+  100% {
+    transform: translateX(50%) rotate(12deg);
+    opacity: 0.12;
+  }
+}
+
+.animate-glossy-shine {
+  animation: glossyShine 12s linear infinite;
+}
