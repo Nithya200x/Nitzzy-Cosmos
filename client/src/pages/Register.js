@@ -116,8 +116,10 @@ const Register = () => {
               border border-white/10
               focus:outline-none focus:border-indigo-500"
           />
+<p className="text-sm text-gray-400">
+  Password (optional if using Google)
+</p>
 
-          Password (optional if using Google)
           <div className="relative">
             <input
               name="password"

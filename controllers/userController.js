@@ -66,30 +66,28 @@ exports.googleAuthController = async (req, res) => {
 };
 
 // Manual registration (email + password)
+// MANUAL REGISTER (EMAIL + PASSWORD)
 exports.registerController = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    if (!email || !password) {
+    if (!username || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required",
+        message: "All fields are required",
       });
     }
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: "User already exists",
+        message: "Email already registered",
       });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
     const user = await User.create({
       username,
       email,
@@ -100,20 +98,16 @@ exports.registerController = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "User registered successfully",
-      user: {
-        id: user._id,
-        email: user.email,
-        username: user.username,
-      },
     });
   } catch (error) {
-    console.error("Register Error:", error.message);
-    return res.status(500).json({
+    console.error("Register error:", error);
+    res.status(500).json({
       success: false,
       message: "Registration failed",
     });
   }
 };
+
 
 //EMAIL + PASSWORD LOGIN
 
