@@ -89,12 +89,12 @@ const BlogCard = ({
           {description}
         </p>
 
-        <button
+        {/* <button
           onClick={() => navigate(`/blog-details/${id}`)}
           className="mt-4 text-sm text-indigo-400 hover:underline"
         >
           Read more →
-        </button>
+        </button> */}
       </div>
     </div>
   );
