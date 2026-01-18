@@ -117,7 +117,7 @@ const Register = () => {
               focus:outline-none focus:border-indigo-500"
           />
 
-          // Password input (optional if using Google)
+          Password (optional if using Google)
           <div className="relative">
             <input
               name="password"
@@ -150,7 +150,6 @@ const Register = () => {
           Create Account
         </button>
 
-        // Google sign up
         <div className="mt-6 flex justify-center">
           <GoogleLogin
             onSuccess={(res) => handleGoogleSignup(res.credential)}

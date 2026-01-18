@@ -8,6 +8,8 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 //GOOGLE AUTH
 exports.googleAuthController = async (req, res) => {
   try {
+    console.log("GOOGLE AUTH HIT");
+    console.log("BODY:", req.body);
     const { credential } = req.body;
 
     if (!credential) {

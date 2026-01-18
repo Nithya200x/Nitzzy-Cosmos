@@ -11,7 +11,7 @@ const Trash = () => {
       const token = localStorage.getItem("token");
 
       const { data } = await axios.get(
-        "${process.env.REACT_APP_API}/api/v1/nitzzy/trash",
+        `${process.env.REACT_APP_API}/api/v1/nitzzy/trash`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

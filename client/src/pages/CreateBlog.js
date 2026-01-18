@@ -35,7 +35,7 @@ const CreateBlog = () => {
       setLoading(true);
 
       const { data } = await axios.post(
-        "${process.env.REACT_APP_API}/api/v1/nitzzy/create-blog",
+        `${process.env.REACT_APP_API}/api/v1/nitzzy/create-blog`,
         {
           title: inputs.title,
           description: inputs.description,

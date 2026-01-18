@@ -22,7 +22,8 @@ const ForgotPassword = () => {
           If you signed up using Google, please log in with Google again.
         </p>
 
-        // Google sign-in option
+        {/* Google sign-in option */}
+
         <div className="flex justify-center mb-6">
           <GoogleLogin
             onSuccess={() => handleGoogleLogin()}

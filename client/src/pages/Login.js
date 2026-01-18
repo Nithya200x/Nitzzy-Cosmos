@@ -115,8 +115,6 @@ const Login = () => {
               border border-white/10
               focus:outline-none focus:border-indigo-500"
           />
-
-          // Password input
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -140,7 +138,7 @@ const Login = () => {
             </button>
           </div>
 
-          // Forgot password
+          
           <p
             onClick={() => navigate("/forgot-password")}
             className="text-sm text-indigo-400 cursor-pointer hover:underline"
@@ -158,7 +156,6 @@ const Login = () => {
           Sign In
         </button>
 
-        // Google login button
         <div className="mt-6 flex justify-center">
           <GoogleLogin
             onSuccess={(res) => handleGoogleLogin(res.credential)}
