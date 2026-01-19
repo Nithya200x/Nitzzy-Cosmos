@@ -81,3 +81,6 @@ Some ideas for future enhancements:
 * Role‑based access control (Admin / Author / Reader)
 
 ---
+## License
+This project is open source and available under the **MIT License**.
+---
